@@ -1,0 +1,1 @@
+//đọc bản đồ dưới dạng json qua trung gian js

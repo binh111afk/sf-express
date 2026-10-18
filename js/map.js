@@ -1,14 +1,16 @@
-const DUONG_DAN_BAN_DO = "assets/ban-do-thanh-pho.svg";
+"use strict";
 
+const DUONG_DAN_BAN_DO = "assets/ban-do-thanh-pho.svg";
 const BUOC_NHAY_ZOOM_NUT = 1.3;
 const BUOC_NHAY_ZOOM_LAN_CHUOT = 1.2;
 const ZOOM_KHI_MO_TRANG = 1.6;
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 8;
 const HANH_VI_CHUOT = 6;
+//chuột di chuyển trên 6px là pan, dưới là bấm
 const BAN_KINH_CHON_DIEM = 24;
 const BAN_KINH_VUNG_BAT_CHUOT = 40;
-const BIEN_KEO_TOI_DA = 80;
+const BIEN_KEO_TOI_DA = 80; // độ dài giới hạn bản đồ đc phép kéo thêm
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 let banDoSvg = null;
@@ -27,9 +29,7 @@ const oBando = document.getElementById("banDo");
 const khungChua = document.getElementById("mapZoom");
 const nutphongto = document.getElementById("phongto");
 const nutthunho = document.getElementById("thunho");
-const nutvekho =
-    document.getElementById("vekho") ||
-    document.getElementById("veKho");
+const nutvekho = document.getElementById("vekho");
 
 if (!oBando) {
     throw new Error("Không tìm thấy phần tử #banDo");
@@ -86,16 +86,14 @@ async function napBanDo() {
         banDoSvg = khungChua.querySelector("svg");
 
         if (!banDoSvg) {
-            throw new Error("File tải về không chứa thẻ SVG");
+            throw new Error("Không tìm đc SVG");
         }
 
         const dulieukho = timdulieukho();
         const phanTuKho = timPhanTuNode(dulieukho.id);
 
         if (!phanTuKho) {
-            throw new Error(
-                "Không tìm thấy node " + dulieukho.id + " trong SVG"
-            );
+            throw new Error("Không tìm thấy dữ liệu trong SVG");
         }
 
         phanTuKho.classList.add("kho");
@@ -110,23 +108,16 @@ async function napBanDo() {
             dungvaokho();
         });
     } catch (loi) {
-        khungChua.textContent =
-            "Không tải được bản đồ: " + loi.message;
+        khungChua.textContent = "Không tải được bản đồ: " + loi.message;
     }
 }
 
 function taoVungBatChuot() {
-    const vungBatChuot = document.createElementNS(
-        SVG_NAMESPACE,
-        "circle"
-    );
+    const vungBatChuot = document.createElementNS(SVG_NAMESPACE,"circle");
 
     vungBatChuot.setAttribute("cx", "0");
     vungBatChuot.setAttribute("cy", "0");
-    vungBatChuot.setAttribute(
-        "r",
-        BAN_KINH_VUNG_BAT_CHUOT
-    );
+    vungBatChuot.setAttribute("r",BAN_KINH_VUNG_BAT_CHUOT);
     vungBatChuot.setAttribute("fill", "transparent");
     vungBatChuot.setAttribute("class", "vung-bat-chuot");
 
@@ -134,10 +125,7 @@ function taoVungBatChuot() {
 }
 
 function taoDauCong() {
-    const dauCong = document.createElementNS(
-        SVG_NAMESPACE,
-        "text"
-    );
+    const dauCong = document.createElementNS(SVG_NAMESPACE,"text");
 
     dauCong.setAttribute("x", "0");
     dauCong.setAttribute("y", "8");
@@ -188,9 +176,7 @@ function hienDiem(id) {
     phanTuDiem.classList.add("diem-hien");
     diemDangHien.add(id);
 
-    const vungBatChuot = phanTuDiem.querySelector(
-        ".vung-bat-chuot"
-    );
+    const vungBatChuot = phanTuDiem.querySelector(".vung-bat-chuot");
 
     if (vungBatChuot) {
         vungBatChuot.remove();
@@ -230,16 +216,17 @@ function anDiem(id) {
 }
 
 function veLaiBanDo() {
-    khungChua.style.transform =
-        "translate(" + lechX + "px, " + lechY + "px) scale(" + mucZoom + ")";
+    khungChua.style.transform = "translate(" + lechX + "px, " + lechY + "px) scale(" + mucZoom + ")";
 }
 
 function gioihankeochuot(hopbando) {
     const vien = BIEN_KEO_TOI_DA;
-    const vitriXtoithieu =
-        hopbando.width - hopbando.width * mucZoom - vien;
-    const vitriYtoithieu =
-        hopbando.height - hopbando.height * mucZoom - vien;
+    /* chỗ này là công thức tính toán vị trí X tối thiểu mà bản đồ được phép kéo theo chiều ngang.
+    Lấy chiều rộng của hộp chứa bản đồ trừ cho viền = 80 xong trừ cho rộng hộp nhân cho giá trị zoom là ra tọa độ
+    tối thiểu được phép kéo thêm. Ví dụ ban đầu hộp rộng 800px, zoom lên x2 là ra 1600 thì viền là 80
+    được phép kéo thêm 80 là X = -880 */
+    const vitriXtoithieu = hopbando.width - hopbando.width * mucZoom - vien;
+    const vitriYtoithieu = hopbando.height - hopbando.height * mucZoom - vien;
 
     if (lechX > vien) {
         lechX = vien;
@@ -273,6 +260,7 @@ function gioihanZoom(giatri) {
 function zoom(heso, vitrichuotX, vitrichuotY) {
     const hopbando = oBando.getBoundingClientRect();
 
+    /*Tọa độ chuột hiện tại trên màn hình*/ 
     if (vitrichuotX === undefined) {
         vitrichuotX = hopbando.left + hopbando.width / 2;
     }
@@ -281,17 +269,15 @@ function zoom(heso, vitrichuotX, vitrichuotY) {
         vitrichuotY = hopbando.top + hopbando.height / 2;
     }
 
-    const diembandoX =
-        (vitrichuotX - hopbando.left - lechX) / mucZoom;
-    const diembandoY =
-        (vitrichuotY - hopbando.top - lechY) / mucZoom;
+    /*Tọa độ chuột sau zoom, công thức thì giả sử gọi x là tọa độ gốc còn vị trí chuột hiện tại là X,
+    L là chiều rộng mép trái, t là chiều rộng bị lệch thì X = sx + t + L. Đổi chiều thì được công thức như dưới*/
+    const diembandoX = (vitrichuotX - hopbando.left - lechX) / mucZoom;
+    const diembandoY = (vitrichuotY - hopbando.top - lechY) / mucZoom;
 
     mucZoom = gioihanZoom(mucZoom * heso);
 
-    lechX =
-        vitrichuotX - hopbando.left - diembandoX * mucZoom;
-    lechY =
-        vitrichuotY - hopbando.top - diembandoY * mucZoom;
+    lechX = vitrichuotX - hopbando.left - diembandoX * mucZoom;
+    lechY = vitrichuotY - hopbando.top - diembandoY * mucZoom;
 
     gioihankeochuot(hopbando);
     veLaiBanDo();
@@ -315,8 +301,7 @@ function dungvaokho(muczoommoi = ZOOM_KHI_MO_TRANG) {
     diemKho.x = dulieukho.x;
     diemKho.y = dulieukho.y;
 
-    const diemKhoTrenManHinh =
-        diemKho.matrixTransform(banDoSvg.getScreenCTM());
+    const diemKhoTrenManHinh = diemKho.matrixTransform(banDoSvg.getScreenCTM());
 
     const khoX = diemKhoTrenManHinh.x - hopbando.left;
     const khoY = diemKhoTrenManHinh.y - hopbando.top;
@@ -349,10 +334,7 @@ function timdiemgannhat(toadoSVG, bankinh) {
     let khoangcachgannhat = bankinh;
 
     for (const node of dulieu.nodes) {
-        const khoangcach = Math.hypot(
-            node.x - toadoSVG.x,
-            node.y - toadoSVG.y
-        );
+        const khoangcach = Math.hypot(node.x - toadoSVG.x,node.y - toadoSVG.y);
 
         if (khoangcach < khoangcachgannhat) {
             khoangcachgannhat = khoangcach;
@@ -364,10 +346,7 @@ function timdiemgannhat(toadoSVG, bankinh) {
 }
 
 function baothaydoi() {
-    if (
-        window.BanDo &&
-        typeof window.BanDo.khithaydoi === "function"
-    ) {
+    if (window.BanDo && typeof window.BanDo.khithaydoi === "function") {
         window.BanDo.khithaydoi();
     }
 }
@@ -499,10 +478,7 @@ function ganSuKien() {
 
         e.preventDefault();
 
-        const heso =
-            e.deltaY < 0
-                ? BUOC_NHAY_ZOOM_LAN_CHUOT
-                : 1 / BUOC_NHAY_ZOOM_LAN_CHUOT;
+        const heso = e.deltaY < 0 ? BUOC_NHAY_ZOOM_LAN_CHUOT : 1 / BUOC_NHAY_ZOOM_LAN_CHUOT;
 
         zoom(heso, e.clientX, e.clientY);
     }, { passive: false });
@@ -560,10 +536,7 @@ function veDuongDi(danhSachId) {
     let lopDuong = banDoSvg.querySelector("#lopDuongDi");
 
     if (!lopDuong) {
-        lopDuong = document.createElementNS(
-            SVG_NAMESPACE,
-            "g"
-        );
+        lopDuong = document.createElementNS(SVG_NAMESPACE,"g");
         lopDuong.id = "lopDuongDi";
         banDoSvg.appendChild(lopDuong);
     }
@@ -586,10 +559,7 @@ function veDuongDi(danhSachId) {
         return;
     }
 
-    const duong = document.createElementNS(
-        SVG_NAMESPACE,
-        "polyline"
-    );
+    const duong = document.createElementNS(SVG_NAMESPACE,"polyline");
 
     duong.setAttribute(
         "points",
@@ -603,9 +573,7 @@ function veDuongDi(danhSachId) {
 }
 
 function xoaDuongDi() {
-    const lopDuong = banDoSvg && banDoSvg.querySelector(
-        "#lopDuongDi"
-    );
+    const lopDuong = banDoSvg && banDoSvg.querySelector("#lopDuongDi");
 
     if (lopDuong) {
         lopDuong.replaceChildren();

@@ -1,39 +1,202 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    max-width: 1700px;
-    margin: 40px auto;
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     font-family: "Plus Jakarta Sans", sans-serif;
+    background: #f2f1ec;
+    color: #1f2937;
 }
 
 .container {
+    flex: 1;
+    min-height: 0;
     display: grid;
     grid-template-columns: 2fr 1fr;
-    grid-template-rows: repeat(3, 270px);
+    grid-template-rows: repeat(3, 1fr);
     grid-template-areas:
         "a b"
         "a b"
         "a c";
     gap: 12px;
+    padding: 12px;
 }
 
-.container>div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: black;
-    border-radius: 10px;
-    border: 2px solid #1E90FF;
+.container > div {
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid #e5e8ec;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
 }
 
 .o1 {
     grid-area: a;
+    position: relative;
+    overflow: hidden;
+    background: #f2f1ec;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.o1.dang-keo {
+    cursor: grabbing;
 }
 
 .o2 {
     grid-area: b;
+    overflow: auto;
+    padding: 20px;
 }
 
 .o3 {
     grid-area: c;
+    overflow: auto;
+    padding: 20px;
+}
+
+.map-zoom {
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+    transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.map-zoom.khong-hieu-ung {
+    transition: none;
+}
+
+.map-zoom svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.dieukhien {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dieukhien button {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid #d8d5cc;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #374151;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.dieukhien button:hover {
+    background: #f3f4f6;
+}
+
+.dieukhien button:active {
+    transform: scale(0.94);
+}
+
+g[data-type="gnode"] {
+    cursor: pointer;
+}
+
+g[data-type="gnode"] text {
+    pointer-events: none;
+}
+
+g.kho circle {
+    fill: #e65100;
+    stroke: #ffffff;
+    stroke-width: 3;
+}
+
+g.kho text {
+    fill: #ffffff;
+    font-weight: 800;
+}
+
+g.diem-chon circle {
+    fill: #2e7d32;
+    stroke: #ffffff;
+    stroke-width: 2.5;
+}
+
+g.diem-chon text {
+    fill: #ffffff;
+    font-weight: 700;
+}
+
+g.diem-an > circle:not(.vung-bat-chuot),
+g.diem-an > text:not(.dau-cong) {
+    visibility: hidden;
+}
+
+g.diem-an .vung-bat-chuot {
+    visibility: visible;
+    pointer-events: all;
+}
+
+g.diem-an .dau-cong {
+    visibility: hidden;
+    pointer-events: none;
+    fill: #2563eb;
+    font-size: 28px;
+    font-weight: 800;
+    stroke: #ffffff;
+    stroke-width: 3px;
+    paint-order: stroke;
+}
+
+g.diem-an:hover .dau-cong {
+    visibility: visible;
+}
+
+g.diem-an:hover .vung-bat-chuot {
+    fill: rgba(37, 99, 235, 0.12);
+}
+
+g.diem-hien circle {
+    visibility: visible;
+}
+
+#lopDuongDi .duong-di {
+    fill: none;
+    stroke: #7b1fa2;
+    stroke-width: 13;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+@media (max-width: 800px) {
+    body {
+        overflow: auto;
+    }
+
+    .container {
+        min-height: 100dvh;
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(420px, 60dvh) auto auto;
+        grid-template-areas:
+            "a"
+            "b"
+            "c";
+    }
 }

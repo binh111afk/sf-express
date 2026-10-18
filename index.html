@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
@@ -14,10 +14,20 @@
 
 <body>
     <div class="container">
-        <div class="o1">Vùng bản đồ</div>
+        <div class="o1" id="banDo">
+            <div class="map-zoom" id="mapZoom"></div>
+            <div class="dieukhien">
+                <button id="phongto">+</button>
+                <button id="thunho">-</button>
+                <button id="vekho">⟲</button>
+            </div>
+        </div>
         <div class="o2">Vùng thiết lập</div>
         <div class="o3">Vùng kết quả</div>
     </div>
+
+    <script src="data/ban-do.js"></script>
+    <script src="js/map.js"></script>
 </body>
 
 </html>

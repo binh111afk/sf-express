@@ -44,11 +44,8 @@ function laydulieubando() {
         throw new Error("Không tìm thấy dữ liệu BAN_DO");
     }
 
-    if (!Array.isArray(BAN_DO.nodes)) {
-        throw new Error("BAN_DO.nodes không phải là một mảng");
-    }
 
-    return BAN_DO;
+    return window.BAN_DO;
 }
 
 function timdulieukho() {
@@ -127,9 +124,8 @@ function taoVungBatChuot() {
 function taoDauCong() {
     const dauCong = document.createElementNS(SVG_NAMESPACE,"text");
 
-    dauCong.setAttribute("x", "0");
+    dauCong.setAttribute("x", "-8");
     dauCong.setAttribute("y", "8");
-    dauCong.setAttribute("text-anchor", "middle");
     dauCong.setAttribute("class", "dau-cong");
     dauCong.textContent = "+";
 

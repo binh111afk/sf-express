@@ -22,13 +22,60 @@
                 <button id="vekho">⟲</button>
             </div>
         </div>
-        <div class="o2">Vùng thiết lập</div>
-        <div class="o3">Vùng kết quả</div>
+        <div class="o2">
+            <h2>Vùng thiết lập</h2>
+
+            <section class="khoi">
+                <h3>1. Chế độ thao tác trên bản đồ</h3>
+                <div class="nhom-nut">
+                    <button type="button" id="nutTaoDiem">Tạo điểm giao hàng</button>
+                    <br>
+                    <button type="button" id="nutHuyDiem">Hủy điểm</button>
+                    
+            </section>
+            <section class="khoi">
+                <hr>
+                <h3>2. Đánh dấu tuyến đường đặc biệt</h3>
+                <div class="nhom-nut">
+                    <button type="button" id="nutCaoDiem">Giờ cao điểm</button>
+                    <button type="button" id="nutNgap">Ngập lụt</button>
+                </div>
+                <p id="thongBao" class="thong-bao"></p>
+                <p id="soLieuThietLap" class="ghi-chu"></p>
+            </section>
+
+            <section class="khoi">
+                <h3>3. Hành động</h3>
+                <div class="nhom-nut">
+                    <button type="button" id="nutTimDuong" class="nut-chinh">Tìm lộ trình</button>
+                    <button type="button" id="nutDatLai">Đặt lại</button>
+                </div>
+            </section>
+
+            
+
+            </div>
+        <div class="o3">
+            <h2>Vùng kết quả <span id="trangThaiKetQua" class="trang-thai">Sẵn sàng</span></h2>
+
+            <div class="so-lieu">
+                <div class="o-so-lieu"><span class="nhan-so">Quãng đường</span><b id="kqQuangDuong">—</b></div>
+                <div class="o-so-lieu"><span class="nhan-so">Thời gian</span><b id="kqThoiGian">—</b></div>
+                <div class="o-so-lieu"><span class="nhan-so">Vận tốc</span><b id="kqVanToc">30 km/h</b></div>
+            </div>
+
+            <h3>Thứ tự ghé các điểm</h3>
+            <div id="kqThuTu" class="thu-tu"><p class="ghi-chu">Chưa tính lộ trình.</p></div>
+            <p id="kqCanhBao" class="canh-bao"></p>
+        </div>
     </div>
 
     <script src="data/ban-do.js"></script>
+    <script src="js/dothi.js"></script>
+    <script src="js/thuattoan.js"></script>
     <script src="js/map.js"></script>
-    <script src="js/dijkstra.js"></script>
+    <script src="js/ketqua.js"></script>
+    <script src="js/thietlap.js"></script>
 </body>
 
 </html>

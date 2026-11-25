@@ -1,16 +1,5 @@
 "use strict";
 
-/**
- * KetQua — hiển thị kết quả lộ trình ở vùng .o3.
- *
- * Kết quả nhận từ Thuattoan.timLoTrinh() có dạng:
- * {
- *   ok: true,
- *   khuc: [{ tu, den, duong: [...], km }],
- *   tongKm: 12.3,
- *   khongToiDuoc: ["A1"]
- * }
- */
 (function () {
 
     const o3 = document.querySelector(".o3");
@@ -31,6 +20,7 @@
     const oThuTu = document.getElementById("kqThuTu");
     const oCanhBao = document.getElementById("kqCanhBao");
     const oTrangThai = document.getElementById("trangThaiKetQua");
+    const oGhiChu = document.getElementById("kqGhiChu");
 
     /* ---------- định dạng ---------- */
 
@@ -76,6 +66,9 @@
         }
         if (oCanhBao) {
             oCanhBao.textContent = "";
+        }
+        if (oGhiChu) {
+            oGhiChu.textContent = "";
         }
         if (oThuTu) {
             const ghiChu = document.createElement("p");
@@ -189,7 +182,7 @@
             if (!doDai) {
                 return;
             }
-
+            //chia độ dài đường thành các điểm
             const soDiem = Math.max(2, Math.ceil(doDai / BUOC_LAY_MAU));
             const cacDiem = [];
 
@@ -247,7 +240,7 @@
                 const key1 = a.nut.id + "|" + b.nut.id;
                 const key2 = b.nut.id + "|" + a.nut.id;
                 const cu = bang.get(key1);
-
+                // lưu vào bảng
                 if (!cu || cu.length > doan.length) {
                     bang.set(key1, doan);
                     bang.set(key2, doan.slice().reverse());
@@ -275,16 +268,16 @@
      * Cạnh nào có đoạn đường tương ứng thì lấy đoạn cong đó;
      * cạnh nào không khớp thì nối thẳng hai nút.
      */
-    function layDiemChiTiet(danhSachId) {
-        const duLieu = window.BanDo.layDuLieu();
-        const nutTheoId = new Map();
+    function layDiemChiTiet(danhSachId) { 
+        const duLieu = window.BanDo.layDuLieu();  
+        const nutTheoId = new Map(); // tra nhanh tọa độ nút theo mã
 
         duLieu.nodes.forEach(function (nut) {
             nutTheoId.set(nut.id, nut);
         });
 
         if (!banDoDuong) {
-            banDoDuong = xayDungBanDoDuong();
+            banDoDuong = xayDungBanDoDuong(); // dựng bảng nếu chưa có
         }
 
         const ketQua = [];
@@ -299,8 +292,10 @@
                 continue;
             }
 
+            //kiển tra coi trong bảng có đoạn nào từ nút A đến B không
             const doan = banDoDuong ? banDoDuong.get(idA + "|" + idB) : null;
 
+            //thêm hết điểm nếu có đoạn trong bảng không thì thêm trực tiếp 2 nút luôn
             if (doan) {
                 doan.forEach(function (diem) {
                     themDiem(ketQua, diem);
@@ -389,19 +384,18 @@
 
         capNhatDoDayTuyen();
 
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            return;
-        }
 
         [quang, vien, chinh].forEach(function (path) {
             path.style.strokeDasharray = "1";
             path.style.strokeDashoffset = "1";
         });
 
-        /* Ép trình duyệt tính lại layout trước khi chạy transition. */
+        /* ép trình duyệt áp dụng trạng thái này trước khi chạy transition */
         void chinh.getBoundingClientRect();
 
+        // yêu càu frame phải cso sự thay đổi mới được chạy
         requestAnimationFrame(function () {
+            // dùng hàm gia tốc
             quang.style.transition = "stroke-dashoffset 900ms cubic-bezier(0.22, 0.61, 0.36, 1)";
             vien.style.transition = "stroke-dashoffset 900ms cubic-bezier(0.22, 0.61, 0.36, 1)";
             chinh.style.transition = "stroke-dashoffset 850ms cubic-bezier(0.22, 0.61, 0.36, 1) 80ms";
@@ -421,7 +415,9 @@
         }
 
         const tongKm = ketQua.tongKm || 0;
-        const phut = (tongKm / VAN_TOC_KM_H) * 60;
+        /* Thời gian ước tính dựa trên quãng đường đã tính giờ cao điểm. */
+        const chiPhi = ketQua.tongChiPhi !== undefined ? ketQua.tongChiPhi : tongKm;
+        const phut = (chiPhi / VAN_TOC_KM_H) * 60;
 
         if (oQuangDuong) {
             oQuangDuong.textContent = dinhDangKm(tongKm);
@@ -432,8 +428,14 @@
         if (oVanToc) {
             oVanToc.textContent = VAN_TOC_KM_H + " km/h";
         }
+        if (oGhiChu) {
+            const coCaoDiem = chiPhi - tongKm > 0.05;
+            oGhiChu.textContent = coCaoDiem
+                ? "Thời gian đã tính thêm do giờ cao điểm."
+                : "";
+        }
 
-        /* Thứ tự: Kho → Giao 1 → Giao 2 → ... */
+        /* Thứ tự: Kho → Giao 1 → Giao 2 → ... → (Kho nếu quay về). */
         if (oThuTu) {
             oThuTu.replaceChildren();
 
@@ -451,9 +453,17 @@
 
             oThuTu.appendChild(taoODiem("Kho", maKho));
 
-            ketQua.khuc.forEach(function (chang, i) {
+            let soGiao = 0;
+
+            ketQua.khuc.forEach(function (chang) {
                 oThuTu.appendChild(taoMuiTen());
-                oThuTu.appendChild(taoODiem("Giao " + (i + 1), chang.den));
+
+                if (chang.den === maKho) {
+                    oThuTu.appendChild(taoODiem("Về", maKho));
+                } else {
+                    soGiao++;
+                    oThuTu.appendChild(taoODiem("Giao " + soGiao, chang.den));
+                }
             });
         }
 
@@ -461,7 +471,7 @@
         if (oCanhBao) {
             if (ketQua.khongToiDuoc && ketQua.khongToiDuoc.length > 0) {
                 oCanhBao.textContent = "Không tới được: " + ketQua.khongToiDuoc.join(", ") +
-                    " (do đường bị chặn hoặc đồ thị bị cắt rời).";
+                    " (do đường bị chặn).";
             } else {
                 oCanhBao.textContent = "";
             }
@@ -514,7 +524,7 @@
             window.BanDo.xoaDuongDi();
         }
     }
-
+    // lắng nghe xem có zoom hay không để thay đổi độ dày tuyến
     window.addEventListener("resize", capNhatDoDayTuyen);
 
     const khungZoom = document.getElementById("mapZoom");
@@ -529,7 +539,9 @@
     window.KetQua = {
         hienTuyen: hienTuyen,
         hienLoi: hienLoi,
-        xoa: xoa
+        xoa: xoa,
+        /* Dãy điểm bám theo đường phố giữa các nút trong danh sách (dùng cho thietlap.js). */
+        diemTheoDuong: layDiemChiTiet
     };
 
 })();

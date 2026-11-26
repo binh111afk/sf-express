@@ -1,5 +1,12 @@
 "use strict";
 
+/**
+
+ * - Bật/tắt chế độ tạo điểm, hủy điểm, đánh dấu giờ cao điểm và ngập lụt.
+ * - Gọi các hàm có sẵn của map.js (window.BanDo) để thay đổi bản đồ.
+ * - Khi bấm «Tìm lộ trình», gọi Thuattoan.timLoTrinh() để tính tuyến.
+ *
+ */
 (function () {
 
     const o1 = document.getElementById("banDo");
@@ -33,7 +40,6 @@
 
     let cheDo = CHE_DO_MAC_DINH;
 
-    
     const loaiSuCo = new Map();
 
     let lanBam = null;
@@ -92,6 +98,11 @@
     }
 
     /* Khoảng cách từ điểm p tới đoạn thẳng a–b. */
+    function chuKyDiem() {
+        /* Chuỗi tóm tắt trạng thái điểm (đã chọn và đang hiện), để so trước/sau một lần bấm. */
+        return BanDo.layDanhSachDiemChon().join(",") + "|" + BanDo.layDanhSachDiemHien().join(",");
+    }
+
     function khoangCachToiDoanThang(p, a, b) {
         const abx = b.x - a.x;
         const aby = b.y - a.y;
@@ -135,27 +146,112 @@
         return ganNhat;
     }
 
+    /* lưu lại để đỡ phải tính toán lại */
+    const hinhDangCanh = new Map();
+
+    function layHinhDangCanh(canh) {
+        if (hinhDangCanh.has(canh.id)) {
+            return hinhDangCanh.get(canh.id);
+        }
+
+        const duLieu = layDuLieu();
+        const a = duLieu.nodes.find(function (nut) { return nut.id === canh.a; });
+        const b = duLieu.nodes.find(function (nut) { return nut.id === canh.b; });
+
+        let diem = [];
+
+        if (a && b) {
+            diem = (window.KetQua && window.KetQua.diemTheoDuong)
+                ? window.KetQua.diemTheoDuong([canh.a, canh.b])
+                : [a, b];
+        }
+
+        hinhDangCanh.set(canh.id, diem);
+        return diem;
+    }
+
+    /* Điểm trên đoạn a–b gần điểm p nhất (hình chiếu, kẹp trong đoạn). */
+    function diemChieuLenDoanThang(p, a, b) {
+        const abx = b.x - a.x;
+        const aby = b.y - a.y;
+        const bp = abx * abx + aby * aby;
+
+        if (bp === 0) {
+            return { x: a.x, y: a.y };
+        }
+
+        let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / bp;
+        t = Math.max(0, Math.min(1, t));
+
+        return { x: a.x + t * abx, y: a.y + t * aby };
+    }
+
+    /* Điểm gần nhất trên đường thật của một cạnh, cùng khoảng cách tới đó. */
+    function diemGanNhatTrenCanh(toaDo, canh) {
+        const hinh = layHinhDangCanh(canh);
+        let tot = null;
+
+        for (let i = 0; i + 1 < hinh.length; i++) {
+            const kc = khoangCachToiDoanThang(toaDo, hinh[i], hinh[i + 1]);
+
+            if (!tot || kc < tot.khoangCach) {
+                tot = {
+                    khoangCach: kc,
+                    diem: diemChieuLenDoanThang(toaDo, hinh[i], hinh[i + 1])
+                };
+            }
+        }
+
+        return tot;
+    }
+
+    /* Cache: mã cạnh → dãy điểm bám theo đường phố. Chỉ lưu khi bản đồ đã có. */
+    const duongCongCache = new Map();
+
+    function layDuongCong(canh) {
+        if (duongCongCache.has(canh.id)) {
+            return duongCongCache.get(canh.id);
+        }
+
+        const duLieu = layDuLieu();
+        const a = duLieu.nodes.find(function (nut) { return nut.id === canh.a; });
+        const b = duLieu.nodes.find(function (nut) { return nut.id === canh.b; });
+        let diem = null;
+
+        if (window.KetQua && typeof window.KetQua.diemTheoDuong === "function") {
+            diem = window.KetQua.diemTheoDuong([canh.a, canh.b]);
+        }
+
+        if (!diem || diem.length < 2) {
+            diem = [a, b];
+        }
+
+        if (laySvg()) {
+            duongCongCache.set(canh.id, diem);
+        }
+
+        return diem;
+    }
+
+    /* Khoảng cách từ điểm p tới đường cong (gồm nhiều đoạn thẳng nối tiếp). */
+    function khoangCachToiDuongCong(p, diem) {
+        let nhoNhat = Infinity;
+
+        for (let i = 0; i + 1 < diem.length; i++) {
+            nhoNhat = Math.min(nhoNhat, khoangCachToiDoanThang(p, diem[i], diem[i + 1]));
+        }
+
+        return nhoNhat;
+    }
+
     function timCanhGanNhat(toaDo) {
         const duLieu = layDuLieu();
         const banKinh = BAN_KINH_CHON_CANH / layZoom();
-
-        const nutTheoId = new Map();
-        duLieu.nodes.forEach(function (nut) {
-            nutTheoId.set(nut.id, nut);
-        });
-
         let ganNhat = null;
         let nhoNhat = banKinh;
 
         duLieu.edges.forEach(function (canh) {
-            const a = nutTheoId.get(canh.a);
-            const b = nutTheoId.get(canh.b);
-
-            if (!a || !b) {
-                return;
-            }
-
-            const khoangCach = khoangCachToiDoanThang(toaDo, a, b);
+            const khoangCach = khoangCachToiDuongCong(toaDo, layDuongCong(canh));
 
             if (khoangCach < nhoNhat) {
                 nhoNhat = khoangCach;
@@ -166,9 +262,78 @@
         return ganNhat;
     }
 
-    /* Chuỗi mô tả trạng thái điểm; dùng để biết một cú bấm có thay đổi điểm không. */
-    function chuKyDiem() {
-        return BanDo.layDanhSachDiemChon().join(",") + "|" + BanDo.layDanhSachDiemHien().join(",");
+    /* =========================================================
+       Rê chuột: tô sáng đoạn đường gần con trỏ (chỉ ở chế độ đánh dấu)
+       ========================================================= */
+
+    const LOP_RE_ID = "lopRe";
+    let canhDangRe = null;
+
+    function laCheDoDanhDauCanh() {
+        return cheDo === CHE_DO.CAO_DIEM || cheDo === CHE_DO.NGAP;
+    }
+
+    function xoaDuongRe() {
+        canhDangRe = null;
+        const svg = laySvg();
+        const lop = svg && svg.querySelector("#" + LOP_RE_ID);
+
+        if (lop) {
+            lop.replaceChildren();
+        }
+    }
+
+    function veDuongRe(canh) {
+        const svg = laySvg();
+
+        if (!svg) {
+            return;
+        }
+
+        let lop = svg.querySelector("#" + LOP_RE_ID);
+
+        if (!lop) {
+            lop = document.createElementNS(SVG_NS, "g");
+            lop.setAttribute("id", LOP_RE_ID);
+            lop.setAttribute("pointer-events", "none");
+            svg.appendChild(lop);
+        }
+
+        lop.replaceChildren();
+
+        const duong = document.createElementNS(SVG_NS, "polyline");
+        duong.setAttribute("points", layDuongCong(canh).map(function (p) {
+            return p.x + "," + p.y;
+        }).join(" "));
+        duong.setAttribute("class", "duong-re");
+        lop.appendChild(duong);
+
+        canhDangRe = canh;
+    }
+
+    function capNhatDuongRe(e) {
+        if (!laCheDoDanhDauCanh() || !laySvg() ||
+            !o1.contains(e.target) || e.target.closest(".dieukhien")) {
+            if (canhDangRe) {
+                xoaDuongRe();
+            }
+            return;
+        }
+
+        const canh = timCanhGanNhat(doiSangToaDoSVG(e.clientX, e.clientY));
+
+        if (!canh) {
+            if (canhDangRe) {
+                xoaDuongRe();
+            }
+            return;
+        }
+
+        if (canhDangRe && canhDangRe.id === canh.id) {
+            return;
+        }
+
+        veDuongRe(canh);
     }
 
     /* =========================================================
@@ -179,7 +344,7 @@
         /* Bấm lại đúng nút đang bật thì tắt chế độ. */
         cheDo = (cheDo === cheDoMoi) ? CHE_DO.KHONG : cheDoMoi;
 
-        /* gọi map.js */
+        /* map.js không đổi hành vi theo chế độ; mọi thao tác thiết lập do file này xử lý. */
         BanDo.datCheDo("chonDiem");
 
         capNhatGiaoDien();
@@ -221,7 +386,14 @@
             nut.setAttribute("aria-pressed", dangBat ? "true" : "false");
         });
 
+        /* Khi không ở chế độ tạo điểm: ẩn dấu + khi rê chuột. */
+        document.body.classList.toggle("khong-tao-diem", cheDo !== CHE_DO.TAO_DIEM);
+        document.body.classList.toggle("che-do-canh", cheDo === CHE_DO.CAO_DIEM || cheDo === CHE_DO.NGAP);
+        document.body.classList.toggle("che-do-xoa", cheDo === CHE_DO.HUY_DIEM);
 
+        if (!laCheDoDanhDauCanh()) {
+            xoaDuongRe();
+        }
 
         capNhatSoLieu();
     }
@@ -250,12 +422,11 @@
        ========================================================= */
 
     function batDauTheoDoi(e) {
-        //kiem tra có ấn vào vùng bản đồ hoặc các nút điều kiển không
         if (!o1.contains(e.target) || e.target.closest(".dieukhien")) {
             lanBam = null;
             return;
         }
-        //kiem tra có ấn bằng chuột trái không
+
         if (e.pointerType === "mouse" && e.button !== 0) {
             lanBam = null;
             return;
@@ -283,7 +454,7 @@
             return;
         }
 
-        /* Chế độ tạo điểm để map.js tự xử lý */
+        /* Chế độ tạo điểm: để map.js tự xử lý như bản gốc. */
         if (cheDo === CHE_DO.TAO_DIEM) {
             /* Chụp trạng thái trước; sau khi map.js chạy xong mới so sánh. */
             const truoc = chuKyDiem();
@@ -298,7 +469,12 @@
             return;
         }
 
-       
+        /*
+         * Các chế độ khác: chặn map.js xử lý cú bấm này.
+         * map.js đã bắt đầu một lượt kéo ở pointerdown, nên phát pointercancel
+         * để nó dọn trạng thái kéo, tránh bản đồ bị kẹt ở trạng thái đang kéo.
+         * (map.js không có API để bỏ qua cú bấm, nên đây là cách hiện có.)
+         */
         e.stopPropagation();
 
         dangHuyKeo = true;
@@ -333,13 +509,21 @@
             return;
         }
 
-        
+        const kho = layDuLieu().nodes.find(function (item) {
+            return item.type === "kho";
+        });
+
+        if (kho && nut.id === kho.id) {
+            thongBao("Không thể ẩn Kho.");
+            return;
+        }
+
         BanDo.anDiem(nut.id);
         thongBao("Đã ẩn điểm " + nut.id + ".", "ok");
         capNhatSauThayDoi();
     }
 
-    /* Hàm này giữ map.js luôn biết đoạn nào bị chặn */
+    /* Đồng bộ trạng thái sự cố sang map.js: cả giờ cao điểm và ngập đều bị tránh. */
     function dongBoTrangThaiMap(idCanh) {
         if (loaiSuCo.has(idCanh)) {
             BanDo.datTrangThaiCanh(idCanh, "ngap");
@@ -389,12 +573,11 @@
             nhom = document.createElementNS(SVG_NS, "g");
             nhom.setAttribute("id", "lopSuCo");
             nhom.setAttribute("pointer-events", "none");
-            svg.appendChild(nhom);//cho nhom vao svg    
+            svg.appendChild(nhom);
         }
 
-        nhom.replaceChildren();// làm mới lớp
+        nhom.replaceChildren();
 
-        //tim cạnh và đỉnh bằng map
         const duLieu = layDuLieu();
         const nutTheoId = new Map();
         const canhTheoId = new Map();
@@ -443,7 +626,6 @@
     /* =========================================================
        5. TÌM LỘ TRÌNH VÀ ĐẶT LẠI
        ========================================================= */
-    //được gọi mỗi khi người dùng thêm, sửa hoặc xóa một sự cố trên bản đồ 
 
     function capNhatSauThayDoi() {
         capNhatSoLieu();
@@ -483,7 +665,7 @@
             return;
         }
 
-        /* đưa cạnh bị ngập và cao điểm vào một Set */
+        /* Cả đoạn ngập và đoạn cao điểm đều bị bỏ khỏi đồ thị. */
         const canhBiChan = new Set(loaiSuCo.keys());
 
         const ketQua = window.Thuattoan.timLoTrinh(duLieu, kho.id, diemNhan, {
@@ -511,7 +693,7 @@
             window.KetQua.hienTuyen(ketQua);
         }
 
-        veLaiSuCo();//ve sự có sau để sự cố nằm trên tuyến dường
+        veLaiSuCo();
 
         if (ketQua.ok) {
             let chu = "Đã tính lộ trình qua " + ketQua.khuc.length + " chặng.";
@@ -601,6 +783,7 @@
          */
         window.addEventListener("pointerdown", batDauTheoDoi, true);
         window.addEventListener("pointerup", ketThucTheoDoi, true);
+        window.addEventListener("pointermove", capNhatDuongRe);
     }
 
     function dongBoTrangThaiCu() {

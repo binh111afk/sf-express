@@ -210,6 +210,42 @@ g.diem-hien circle {
     pointer-events: none;
 }
 
+/* Đường sáng và dấu «+» khi rê chuột gần đoạn đường (vẽ bởi thietlap.js). */
+#lopDauCong .canh-hover {
+    fill: none;
+    stroke: #2563eb;
+    stroke-opacity: 0.35;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+#lopDauCong .dau-cong-canh {
+    font-size: 26px;
+    font-weight: 800;
+    stroke: #ffffff;
+    stroke-width: 3px;
+    paint-order: stroke;
+}
+
+#lopDauCong .dau-cong-canh.mau-cao-diem { fill: #f59e0b; }
+#lopDauCong .dau-cong-canh.mau-ngap { fill: #dc2626; }
+
+/* Quầng xanh nhạt hiện khi rê chuột gần tuyến (ketqua.js: capNhatTuyenSang). */
+#lopDuongDi .tuyen-sang {
+    fill: none;
+    stroke: #7dd3fc;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+#lopDuongDi .tuyen-sang.hien {
+    opacity: 0.9;
+}
+
 /* Dấu sự cố trên bản đồ (vẽ bởi thietlap.js). */
 #lopSuCo .canh-su-co {
     fill: none;
@@ -220,13 +256,23 @@ g.diem-hien circle {
 #lopSuCo .canh-cao-diem {
     stroke: #f59e0b;
     stroke-width: 7;
-    stroke-dasharray: 12 12;
 }
 
 #lopSuCo .canh-ngap {
     stroke: #dc2626;
     stroke-width: 7;
-    stroke-dasharray: 12 12;
+    stroke-dasharray: 12 8;
+}
+
+/* Đoạn đường được tô sáng khi rê chuột ở chế độ đánh dấu (vẽ bởi thietlap.js). */
+#lopRe .duong-re {
+    fill: none;
+    stroke: #93c5fd;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+    pointer-events: none;
 }
 
 @media (max-width: 800px) {
@@ -269,7 +315,13 @@ g.diem-hien circle {
 .o2 button:hover { background: #f3f4f6; }
 .o2 button.dang-bat { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
 .o2 button.nut-chinh { background: #2563eb; border-color: #2563eb; color: #fff; }
-
+.o2 .chu-giai { margin: 0; padding: 0; list-style: none; font-size: 13px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.o2 .mau { display: inline-block; width: 22px; height: 0; border-top: 4px solid; vertical-align: middle; margin-right: 6px; }
+.o2 .mau-kho { height: 12px; width: 12px; border: none; border-radius: 50%; background: #e65100; }
+.o2 .mau-diem { height: 12px; width: 12px; border: none; border-radius: 50%; background: #2e7d32; }
+.o2 .mau-duongdi { border-color: #2563eb; }
+.o2 .mau-chan { border-top-style: dashed; border-color: #f59e0b; }
+.o2 .mau-ngap { border-top-style: dashed; border-color: #dc2626; }
 
 .trang-thai { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #e5e7eb; font-size: 12px; font-weight: 600; }
 .trang-thai.xong { background: #dcfce7; color: #15803d; }
@@ -285,3 +337,5 @@ g.diem-hien circle {
 .canh-bao { color: #b45309; }
 .o2 .tuy-chon { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; cursor: pointer; }
 .o2 .tuy-chon input { width: 16px; height: 16px; margin: 0; accent-color: #2563eb; }
+.o2 .chu-giai li { display: flex; align-items: center; }
+.o3 .ghi-chu { margin: -4px 0 12px; }

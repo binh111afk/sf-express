@@ -1,5 +1,18 @@
 "use strict";
 
+/**
+ * KetQua — hiển thị kết quả lộ trình ở vùng .o3.
+ *
+ * Kết quả nhận từ tinhLoTrinh() trong thietlap.js có dạng:
+ * {
+ *   ok: true,
+ *   khuc: [{ tu, den, duong: [...], km, kmThuc }],
+ *   tongKm: 12.3,        // quãng đường thực tế (km gốc)
+ *   tongChiPhi: 15.0,    // quãng đường đã tính giờ cao điểm, dùng để ước tính thời gian
+ *   khongToiDuoc: ["A1"],
+ *   quayVe: true         // có quay về Kho ở cuối không
+ * }
+ */
 (function () {
 
     const o3 = document.querySelector(".o3");
@@ -13,6 +26,8 @@
 
     /* Bảng tra: cặp mã nút → dãy điểm bám theo tim đường trong SVG. */
     let banDoDuong = null;
+    /* Điểm và chuỗi d của tuyến đang vẽ; dùng cho hiệu ứng rê chuột. */
+    let diemTuyenHienTai = null;
 
     const oQuangDuong = document.getElementById("kqQuangDuong");
     const oThoiGian = document.getElementById("kqThoiGian");
@@ -146,6 +161,8 @@
                 path.style.strokeWidth = (10 / tiLe) + "px";
             } else if (path.classList.contains("tuyen-quang")) {
                 path.style.strokeWidth = (16 / tiLe) + "px";
+            } else if (path.classList.contains("tuyen-sang")) {
+                path.style.strokeWidth = (22 / tiLe) + "px";
             }
         });
     }
@@ -182,7 +199,7 @@
             if (!doDai) {
                 return;
             }
-            //chia độ dài đường thành các điểm
+
             const soDiem = Math.max(2, Math.ceil(doDai / BUOC_LAY_MAU));
             const cacDiem = [];
 
@@ -240,7 +257,7 @@
                 const key1 = a.nut.id + "|" + b.nut.id;
                 const key2 = b.nut.id + "|" + a.nut.id;
                 const cu = bang.get(key1);
-                // lưu vào bảng
+
                 if (!cu || cu.length > doan.length) {
                     bang.set(key1, doan);
                     bang.set(key2, doan.slice().reverse());
@@ -268,16 +285,16 @@
      * Cạnh nào có đoạn đường tương ứng thì lấy đoạn cong đó;
      * cạnh nào không khớp thì nối thẳng hai nút.
      */
-    function layDiemChiTiet(danhSachId) { 
-        const duLieu = window.BanDo.layDuLieu();  
-        const nutTheoId = new Map(); // tra nhanh tọa độ nút theo mã
+    function layDiemChiTiet(danhSachId) {
+        const duLieu = window.BanDo.layDuLieu();
+        const nutTheoId = new Map();
 
         duLieu.nodes.forEach(function (nut) {
             nutTheoId.set(nut.id, nut);
         });
 
         if (!banDoDuong) {
-            banDoDuong = xayDungBanDoDuong(); // dựng bảng nếu chưa có
+            banDoDuong = xayDungBanDoDuong();
         }
 
         const ketQua = [];
@@ -292,10 +309,8 @@
                 continue;
             }
 
-            //kiển tra coi trong bảng có đoạn nào từ nút A đến B không
             const doan = banDoDuong ? banDoDuong.get(idA + "|" + idB) : null;
 
-            //thêm hết điểm nếu có đoạn trong bảng không thì thêm trực tiếp 2 nút luôn
             if (doan) {
                 doan.forEach(function (diem) {
                     themDiem(ketQua, diem);
@@ -378,33 +393,100 @@
             return;
         }
 
+        diemTuyenHienTai = cacDiem;
+
+        /* Lớp quầng xanh nhạt khi rê chuột: vẽ trước để nằm dưới các lớp tuyến. */
+        const sang = document.createElementNS(SVG_NS, "path");
+        sang.setAttribute("d", duong);
+        sang.setAttribute("class", "tuyen-sang");
+        sang.setAttribute("pathLength", "1");
+        lop.appendChild(sang);
+
         const quang = taoPathTuyen(lop, duong, "tuyen-quang");
         const vien = taoPathTuyen(lop, duong, "tuyen-vien");
         const chinh = taoPathTuyen(lop, duong, "tuyen-chinh");
 
         capNhatDoDayTuyen();
 
-
+        /*
+         * Nét luôn hiện đủ: dasharray 1 trên pathLength 1 nghĩa là vẽ kín cả đường.
+         * Hiệu ứng vẽ dần chỉ là animation thêm lên trên, nên nếu animation
+         * không chạy thì tuyến vẫn hiện, không bị ẩn chờ một lần vẽ lại.
+         */
         [quang, vien, chinh].forEach(function (path) {
             path.style.strokeDasharray = "1";
-            path.style.strokeDashoffset = "1";
         });
 
-        /* ép trình duyệt áp dụng trạng thái này trước khi chạy transition */
-        void chinh.getBoundingClientRect();
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+            typeof chinh.animate !== "function") {
+            return;
+        }
 
-        // yêu càu frame phải cso sự thay đổi mới được chạy
-        requestAnimationFrame(function () {
-            // dùng hàm gia tốc
-            quang.style.transition = "stroke-dashoffset 900ms cubic-bezier(0.22, 0.61, 0.36, 1)";
-            vien.style.transition = "stroke-dashoffset 900ms cubic-bezier(0.22, 0.61, 0.36, 1)";
-            chinh.style.transition = "stroke-dashoffset 850ms cubic-bezier(0.22, 0.61, 0.36, 1) 80ms";
+        const dauVao = [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }];
+        const duongCong = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 
-            quang.style.strokeDashoffset = "0";
-            vien.style.strokeDashoffset = "0";
-            chinh.style.strokeDashoffset = "0";
-        });
+        quang.animate(dauVao, { duration: 900, easing: duongCong });
+        vien.animate(dauVao, { duration: 900, easing: duongCong });
+        chinh.animate(dauVao, { duration: 850, delay: 80, easing: duongCong });
     }
+
+    /* ---------- rê chuột gần tuyến: tô sáng ---------- */
+
+    /* Khoảng cách (px màn hình) để coi con trỏ là đang "gần" tuyến. */
+    const KHOANG_RE_TUYEN_PX = 14;
+
+    function khoangCachDoanThang(p, a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const binhPhuongDoDai = dx * dx + dy * dy;
+        let t = binhPhuongDoDai === 0 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / binhPhuongDoDai;
+
+        t = Math.max(0, Math.min(1, t));
+
+        const ex = a.x + t * dx - p.x;
+        const ey = a.y + t * dy - p.y;
+
+        return Math.sqrt(ex * ex + ey * ey);
+    }
+
+    function capNhatTuyenSang(e) {
+        const svg = laySvgBanDo();
+        const lop = svg && svg.querySelector("#lopDuongDi");
+        const sang = lop && lop.querySelector(".tuyen-sang");
+
+        if (!sang) {
+            return;
+        }
+
+        const dangTrenBanDo = e.target && e.target.closest && e.target.closest("#banDo");
+
+        if (!dangTrenBanDo || !diemTuyenHienTai || diemTuyenHienTai.length < 2) {
+            sang.classList.remove("hien");
+            return;
+        }
+
+        const maTran = svg.getScreenCTM();
+        const tiLe = Math.abs(maTran.a) || 1;
+        const diemSVG = svg.createSVGPoint();
+
+        diemSVG.x = e.clientX;
+        diemSVG.y = e.clientY;
+
+        const p = diemSVG.matrixTransform(maTran.inverse());
+        const nguong = KHOANG_RE_TUYEN_PX / tiLe;
+
+        let gan = false;
+
+        for (let i = 0; i < diemTuyenHienTai.length - 1 && !gan; i++) {
+            if (khoangCachDoanThang(p, diemTuyenHienTai[i], diemTuyenHienTai[i + 1]) <= nguong) {
+                gan = true;
+            }
+        }
+
+        sang.classList.toggle("hien", gan);
+    }
+
+    window.addEventListener("pointermove", capNhatTuyenSang);
 
     /* ---------- hiển thị ---------- */
 
@@ -471,7 +553,7 @@
         if (oCanhBao) {
             if (ketQua.khongToiDuoc && ketQua.khongToiDuoc.length > 0) {
                 oCanhBao.textContent = "Không tới được: " + ketQua.khongToiDuoc.join(", ") +
-                    " (do đường bị chặn).";
+                    " (do đường bị chặn hoặc đồ thị bị cắt rời).";
             } else {
                 oCanhBao.textContent = "";
             }
@@ -518,13 +600,14 @@
 
     function xoa() {
         xoaNoiDung();
+        diemTuyenHienTai = null;
         datTrangThai("Sẵn sàng", "");
 
         if (window.BanDo) {
             window.BanDo.xoaDuongDi();
         }
     }
-    // lắng nghe xem có zoom hay không để thay đổi độ dày tuyến
+
     window.addEventListener("resize", capNhatDoDayTuyen);
 
     const khungZoom = document.getElementById("mapZoom");

@@ -5,7 +5,7 @@
  * - Bật/tắt chế độ tạo điểm, hủy điểm, đánh dấu giờ cao điểm và ngập lụt.
  * - Gọi các hàm có sẵn của map.js (window.BanDo) để thay đổi bản đồ.
  * - Khi bấm «Tìm lộ trình», gọi Thuattoan.timLoTrinh() để tính tuyến.
- *
+ 
  */
 (function () {
 

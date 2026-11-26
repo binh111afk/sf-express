@@ -31,7 +31,6 @@
     const oVanToc = document.getElementById("kqVanToc");
     const oThuTu = document.getElementById("kqThuTu");
     const oCanhBao = document.getElementById("kqCanhBao");
-    const oTrangThai = document.getElementById("trangThaiKetQua");
 
     /* ---------- định dạng ---------- */
 
@@ -54,15 +53,6 @@
         const conLai = lamTron % 60;
 
         return conLai === 0 ? gio + " giờ" : gio + " giờ " + conLai + " phút";
-    }
-
-    function datTrangThai(chu, loai) {
-        if (!oTrangThai) {
-            return;
-        }
-
-        oTrangThai.textContent = chu;
-        oTrangThai.className = "trang-thai" + (loai ? " " + loai : "");
     }
 
     function xoaNoiDung() {
@@ -171,7 +161,7 @@
     function xayDungBanDoDuong() {
         const svg = laySvgBanDo();
 
-        if (!svg || !window.BanDo) {
+        if (!svg) {
             return null;
         }
 
@@ -359,7 +349,7 @@
     function veTuyenCoHieuUng(danhSachId) {
         const svg = laySvgBanDo();
 
-        if (!svg || !window.BanDo) {
+        if (!svg) {
             return;
         }
 
@@ -411,7 +401,6 @@
             path.style.strokeDasharray = "1";
         });
 
-        
         /*
          * fill "backwards": trước khi animation bắt đầu (kể cả trong thời gian delay)
          * nét đang ở trạng thái đầu (chưa vẽ), nên tuyến không hiện ra một lần rồi mới vẽ.
@@ -451,14 +440,12 @@
 
             let maKho = "KHO";
 
-            if (window.BanDo) {
-                const kho = window.BanDo.layDuLieu().nodes.find(function (nut) {
-                    return nut.type === "kho";
-                });
+            const kho = window.BanDo.layDuLieu().nodes.find(function (nut) {
+                return nut.type === "kho";
+            });
 
-                if (kho) {
-                    maKho = kho.id;
-                }
+            if (kho) {
+                maKho = kho.id;
             }
 
             oThuTu.appendChild(taoODiem("Kho", maKho));
@@ -488,28 +475,20 @@
         }
 
         /* Vẽ tuyến lên bản đồ. Nối các chặng, bỏ nút trùng ở chỗ nối. */
-        if (window.BanDo) {
-            const tatCa = [];
+        const tatCa = [];
 
-            ketQua.khuc.forEach(function (chang) {
-                chang.duong.forEach(function (id, i) {
-                    if (i === 0 && tatCa[tatCa.length - 1] === id) {
-                        return;
-                    }
-                    tatCa.push(id);
-                });
+        ketQua.khuc.forEach(function (chang) {
+            chang.duong.forEach(function (id, i) {
+                if (i === 0 && tatCa[tatCa.length - 1] === id) {
+                    return;
+                }
+                tatCa.push(id);
             });
+        });
 
-            if (tatCa.length >= 2) {
-                veTuyenCoHieuUng(tatCa);
-            }
-
-            if (window.ThietLap && typeof window.ThietLap.veLaiSuCo === "function") {
-                window.ThietLap.veLaiSuCo();
-            }
+        if (tatCa.length >= 2) {
+            veTuyenCoHieuUng(tatCa);
         }
-
-        datTrangThai("Đã tính xong", "xong");
     }
 
     function hienLoi(thongBao) {
@@ -519,33 +498,23 @@
             oCanhBao.textContent = thongBao;
         }
 
-        if (window.BanDo) {
-            window.BanDo.xoaDuongDi();
-        }
-
-        datTrangThai("Có lỗi", "loi");
+        window.BanDo.xoaDuongDi();
     }
 
     function xoa() {
         xoaNoiDung();
         diemTuyenHienTai = null;
-        datTrangThai("Sẵn sàng", "");
 
-        if (window.BanDo) {
-            window.BanDo.xoaDuongDi();
-        }
+        window.BanDo.xoaDuongDi();
     }
 
     window.addEventListener("resize", capNhatDoDayTuyen);
 
-    const khungZoom = document.getElementById("mapZoom");
-
-    if (khungZoom && typeof MutationObserver === "function") {
-        new MutationObserver(capNhatDoDayTuyen).observe(khungZoom, {
-            attributes: true,
-            attributeFilter: ["style"]
-        });
-    }
+    /* Khi bản đồ được zoom hoặc kéo (style của #mapZoom đổi), tính lại độ dày nét. */
+    new MutationObserver(capNhatDoDayTuyen).observe(document.getElementById("mapZoom"), {
+        attributes: true,
+        attributeFilter: ["style"]
+    });
 
     window.KetQua = {
         hienTuyen: hienTuyen,

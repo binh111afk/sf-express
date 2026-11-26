@@ -298,9 +298,6 @@ g.diem-hien circle {
 .o2 button.dang-bat { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
 .o2 button.nut-chinh { background: #2563eb; border-color: #2563eb; color: #fff; }
 
-.trang-thai { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #e5e7eb; font-size: 12px; font-weight: 600; }
-.trang-thai.xong { background: #dcfce7; color: #15803d; }
-.trang-thai.loi { background: #fee2e2; color: #b91c1c; }
 .so-lieu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .o-so-lieu { padding: 8px; border: 1px solid #e5e8ec; border-radius: 8px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 .nhan-so { color: #6b7280; font-size: 12px; }

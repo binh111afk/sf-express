@@ -1,16 +1,13 @@
 "use strict";
 
 /**
- * KetQua — hiển thị kết quả lộ trình ở vùng .o3.
- *
- * Kết quả nhận từ tinhLoTrinh() trong thietlap.js có dạng:
+ 
+  Kết quả nhận từ timLoTrinh() trong thietlap.js có dạng:
  * {
  *   ok: true,
- *   khuc: [{ tu, den, duong: [...], km, kmThuc }],
- *   tongKm: 12.3,        // quãng đường thực tế (km gốc)
- *   tongChiPhi: 15.0,    // quãng đường đã tính giờ cao điểm, dùng để ước tính thời gian
- *   khongToiDuoc: ["A1"],
- *   quayVe: true         // có quay về Kho ở cuối không
+ *   khuc: [{ tu, den, duong: [...] }],
+ *   tongKm: 12.3,        // quãng đường (km)
+ *   khongToiDuoc: ["A1"]
  * }
  */
 (function () {
@@ -35,7 +32,6 @@
     const oThuTu = document.getElementById("kqThuTu");
     const oCanhBao = document.getElementById("kqCanhBao");
     const oTrangThai = document.getElementById("trangThaiKetQua");
-    const oGhiChu = document.getElementById("kqGhiChu");
 
     /* ---------- định dạng ---------- */
 
@@ -81,9 +77,6 @@
         }
         if (oCanhBao) {
             oCanhBao.textContent = "";
-        }
-        if (oGhiChu) {
-            oGhiChu.textContent = "";
         }
         if (oThuTu) {
             const ghiChu = document.createElement("p");
@@ -349,6 +342,7 @@
         }
     }
 
+    //tạo một thẻ path cho một lớp của tuyến (quầng, viền hoặc nét chính)
     function taoPathTuyen(lop, duong, tenLop) {
         const path = document.createElementNS(SVG_NS, "path");
         path.setAttribute("d", duong);
@@ -417,11 +411,7 @@
             path.style.strokeDasharray = "1";
         });
 
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-            typeof chinh.animate !== "function") {
-            return;
-        }
-
+        
         /*
          * fill "backwards": trước khi animation bắt đầu (kể cả trong thời gian delay)
          * nét đang ở trạng thái đầu (chưa vẽ), nên tuyến không hiện ra một lần rồi mới vẽ.
@@ -443,9 +433,8 @@
         }
 
         const tongKm = ketQua.tongKm || 0;
-        /* Thời gian ước tính dựa trên quãng đường đã tính giờ cao điểm. */
-        const chiPhi = ketQua.tongChiPhi !== undefined ? ketQua.tongChiPhi : tongKm;
-        const phut = (chiPhi / VAN_TOC_KM_H) * 60;
+        /* Thời gian ước tính = quãng đường / vận tốc. */
+        const phut = (tongKm / VAN_TOC_KM_H) * 60;
 
         if (oQuangDuong) {
             oQuangDuong.textContent = dinhDangKm(tongKm);
@@ -456,13 +445,6 @@
         if (oVanToc) {
             oVanToc.textContent = VAN_TOC_KM_H + " km/h";
         }
-        if (oGhiChu) {
-            const coCaoDiem = chiPhi - tongKm > 0.05;
-            oGhiChu.textContent = coCaoDiem
-                ? "Thời gian đã tính thêm do giờ cao điểm."
-                : "";
-        }
-
         /* Thứ tự: Kho → Giao 1 → Giao 2 → ... → (Kho nếu quay về). */
         if (oThuTu) {
             oThuTu.replaceChildren();

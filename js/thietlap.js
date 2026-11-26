@@ -146,7 +146,7 @@
         return ganNhat;
     }
 
-    /* Cache: mã cạnh → dãy điểm bám theo đường phố. Chỉ lưu khi bản đồ đã có. */
+    /*  lưu vào map để gọi lại, đỡ phải chạy lại từ dầud  */
     const duongCongCache = new Map();
 
     function layDuongCong(canh) {
@@ -203,9 +203,7 @@
         return ganNhat;
     }
 
-    /* =========================================================
-       Rê chuột: tô sáng đoạn đường gần con trỏ (chỉ ở chế độ đánh dấu)
-       ========================================================= */
+    /* Rê chuột: tô sáng đoạn đường gần con trỏ (chỉ ở chế độ đánh dấu)*/
 
     const LOP_RE_ID = "lopRe";
     let canhDangRe = null;
@@ -365,11 +363,6 @@
             nut.setAttribute("aria-pressed", dangBat ? "true" : "false");
         });
 
-        /* Khi không ở chế độ tạo điểm: ẩn dấu + khi rê chuột. */
-        document.body.classList.toggle("khong-tao-diem", cheDo !== CHE_DO.TAO_DIEM);
-        document.body.classList.toggle("che-do-canh", cheDo === CHE_DO.CAO_DIEM || cheDo === CHE_DO.NGAP);
-        document.body.classList.toggle("che-do-xoa", cheDo === CHE_DO.HUY_DIEM);
-
         if (!laCheDoDanhDauCanh()) {
             xoaDuongRe();
         }
@@ -452,7 +445,6 @@
          * Các chế độ khác: chặn map.js xử lý cú bấm này.
          * map.js đã bắt đầu một lượt kéo ở pointerdown, nên phát pointercancel
          * để nó dọn trạng thái kéo, tránh bản đồ bị kẹt ở trạng thái đang kéo.
-         * (map.js không có API để bỏ qua cú bấm, nên đây là cách hiện có.)
          */
         e.stopPropagation();
 
@@ -616,7 +608,7 @@
         window.dispatchEvent(new CustomEvent("ban-do-thay-doi"));
     }
 
-    function timDuong() {
+     function timDuong() {
         if (!window.Thuattoan) {
             thongBao("Chưa nạp js/thuattoan.js.", "loi");
             return;
@@ -661,7 +653,7 @@
             });
 
             if (ve.ok) {
-                ketQua.khuc.push({ tu: diemCuoi, den: kho.id, duong: ve.duong, km: ve.km, kmThuc: ve.km });
+                ketQua.khuc.push({ tu: diemCuoi, den: kho.id, duong: ve.duong });
                 ketQua.tongKm += ve.km;
             } else {
                 canhBaoVe = "Không tìm được đường về Kho: " + ve.loi;
@@ -797,15 +789,7 @@
 
     /* API cho ketqua.js dùng lại. */
     window.ThietLap = {
-        veLaiSuCo: veLaiSuCo,
-        datLai: datLai,
-        timDuong: timDuong,
-        layCheDo: function () {
-            return cheDo;
-        },
-        layLoaiSuCo: function () {
-            return new Map(loaiSuCo);
-        }
+        veLaiSuCo: veLaiSuCo
     };
 
     dongBoTrangThaiCu();

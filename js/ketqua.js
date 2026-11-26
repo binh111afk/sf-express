@@ -422,71 +422,17 @@
             return;
         }
 
+        /*
+         * fill "backwards": trước khi animation bắt đầu (kể cả trong thời gian delay)
+         * nét đang ở trạng thái đầu (chưa vẽ), nên tuyến không hiện ra một lần rồi mới vẽ.
+         */
         const dauVao = [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }];
         const duongCong = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 
-        quang.animate(dauVao, { duration: 900, easing: duongCong });
-        vien.animate(dauVao, { duration: 900, easing: duongCong });
-        chinh.animate(dauVao, { duration: 850, delay: 80, easing: duongCong });
+        quang.animate(dauVao, { duration: 900, easing: duongCong, fill: "backwards" });
+        vien.animate(dauVao, { duration: 900, easing: duongCong, fill: "backwards" });
+        chinh.animate(dauVao, { duration: 850, delay: 80, easing: duongCong, fill: "backwards" });
     }
-
-    /* ---------- rê chuột gần tuyến: tô sáng ---------- */
-
-    /* Khoảng cách (px màn hình) để coi con trỏ là đang "gần" tuyến. */
-    const KHOANG_RE_TUYEN_PX = 14;
-
-    function khoangCachDoanThang(p, a, b) {
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const binhPhuongDoDai = dx * dx + dy * dy;
-        let t = binhPhuongDoDai === 0 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / binhPhuongDoDai;
-
-        t = Math.max(0, Math.min(1, t));
-
-        const ex = a.x + t * dx - p.x;
-        const ey = a.y + t * dy - p.y;
-
-        return Math.sqrt(ex * ex + ey * ey);
-    }
-
-    function capNhatTuyenSang(e) {
-        const svg = laySvgBanDo();
-        const lop = svg && svg.querySelector("#lopDuongDi");
-        const sang = lop && lop.querySelector(".tuyen-sang");
-
-        if (!sang) {
-            return;
-        }
-
-        const dangTrenBanDo = e.target && e.target.closest && e.target.closest("#banDo");
-
-        if (!dangTrenBanDo || !diemTuyenHienTai || diemTuyenHienTai.length < 2) {
-            sang.classList.remove("hien");
-            return;
-        }
-
-        const maTran = svg.getScreenCTM();
-        const tiLe = Math.abs(maTran.a) || 1;
-        const diemSVG = svg.createSVGPoint();
-
-        diemSVG.x = e.clientX;
-        diemSVG.y = e.clientY;
-
-        const p = diemSVG.matrixTransform(maTran.inverse());
-        const nguong = KHOANG_RE_TUYEN_PX / tiLe;
-
-        let gan = false;
-
-        for (let i = 0; i < diemTuyenHienTai.length - 1 && !gan; i++) {
-            if (khoangCachDoanThang(p, diemTuyenHienTai[i], diemTuyenHienTai[i + 1]) <= nguong) {
-                gan = true;
-            }
-        }
-
-        sang.classList.toggle("hien", gan);
-    }
-
-    window.addEventListener("pointermove", capNhatTuyenSang);
 
     /* ---------- hiển thị ---------- */
 
@@ -624,7 +570,11 @@
         hienLoi: hienLoi,
         xoa: xoa,
         /* Dãy điểm bám theo đường phố giữa các nút trong danh sách (dùng cho thietlap.js). */
-        diemTheoDuong: layDiemChiTiet
+        diemTheoDuong: layDiemChiTiet,
+        /* Các điểm của tuyến đang vẽ (dùng cho hiệu ứng rê chuột trong thietlap.js). */
+        layDiemTuyen: function () {
+            return diemTuyenHienTai;
+        }
     };
 
 })();

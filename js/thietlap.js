@@ -146,65 +146,6 @@
         return ganNhat;
     }
 
-    /* lưu lại để đỡ phải tính toán lại */
-    const hinhDangCanh = new Map();
-
-    function layHinhDangCanh(canh) {
-        if (hinhDangCanh.has(canh.id)) {
-            return hinhDangCanh.get(canh.id);
-        }
-
-        const duLieu = layDuLieu();
-        const a = duLieu.nodes.find(function (nut) { return nut.id === canh.a; });
-        const b = duLieu.nodes.find(function (nut) { return nut.id === canh.b; });
-
-        let diem = [];
-
-        if (a && b) {
-            diem = (window.KetQua && window.KetQua.diemTheoDuong)
-                ? window.KetQua.diemTheoDuong([canh.a, canh.b])
-                : [a, b];
-        }
-
-        hinhDangCanh.set(canh.id, diem);
-        return diem;
-    }
-
-    /* Điểm trên đoạn a–b gần điểm p nhất (hình chiếu, kẹp trong đoạn). */
-    function diemChieuLenDoanThang(p, a, b) {
-        const abx = b.x - a.x;
-        const aby = b.y - a.y;
-        const bp = abx * abx + aby * aby;
-
-        if (bp === 0) {
-            return { x: a.x, y: a.y };
-        }
-
-        let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / bp;
-        t = Math.max(0, Math.min(1, t));
-
-        return { x: a.x + t * abx, y: a.y + t * aby };
-    }
-
-    /* Điểm gần nhất trên đường thật của một cạnh, cùng khoảng cách tới đó. */
-    function diemGanNhatTrenCanh(toaDo, canh) {
-        const hinh = layHinhDangCanh(canh);
-        let tot = null;
-
-        for (let i = 0; i + 1 < hinh.length; i++) {
-            const kc = khoangCachToiDoanThang(toaDo, hinh[i], hinh[i + 1]);
-
-            if (!tot || kc < tot.khoangCach) {
-                tot = {
-                    khoangCach: kc,
-                    diem: diemChieuLenDoanThang(toaDo, hinh[i], hinh[i + 1])
-                };
-            }
-        }
-
-        return tot;
-    }
-
     /* Cache: mã cạnh → dãy điểm bám theo đường phố. Chỉ lưu khi bản đồ đã có. */
     const duongCongCache = new Map();
 
@@ -334,6 +275,44 @@
         }
 
         veDuongRe(canh);
+    }
+
+    /* =========================================================
+       Rê chuột gần tuyến: hiện quầng xanh nhạt dọc theo tuyến
+       ========================================================= */
+
+    /* Khoảng cách (px màn hình) để coi con trỏ là đang gần tuyến. */
+    const KHOANG_RE_TUYEN_PX = 14;
+
+    function capNhatQuangTuyen(e) {
+        const svg = laySvg();
+        const quang = svg && svg.querySelector("#lopDuongDi .tuyen-sang");
+
+        if (!quang) {
+            return;
+        }
+
+        const diemTuyen = window.KetQua && window.KetQua.layDiemTuyen ? window.KetQua.layDiemTuyen() : null;
+        const dangTrenBanDo = e.target && e.target.closest && e.target.closest("#banDo");
+
+        if (!dangTrenBanDo || !diemTuyen || diemTuyen.length < 2) {
+            quang.classList.remove("hien");
+            return;
+        }
+
+        const tiLe = Math.abs(svg.getScreenCTM().a) || 1;
+        const toaDo = doiSangToaDoSVG(e.clientX, e.clientY);
+        const nguong = KHOANG_RE_TUYEN_PX / tiLe;
+
+        let gan = false;
+
+        for (let i = 0; i + 1 < diemTuyen.length && !gan; i++) {
+            if (khoangCachToiDoanThang(toaDo, diemTuyen[i], diemTuyen[i + 1]) <= nguong) {
+                gan = true;
+            }
+        }
+
+        quang.classList.toggle("hien", gan);
     }
 
     /* =========================================================
@@ -784,6 +763,7 @@
         window.addEventListener("pointerdown", batDauTheoDoi, true);
         window.addEventListener("pointerup", ketThucTheoDoi, true);
         window.addEventListener("pointermove", capNhatDuongRe);
+        window.addEventListener("pointermove", capNhatQuangTuyen);
     }
 
     function dongBoTrangThaiCu() {

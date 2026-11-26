@@ -256,7 +256,7 @@ function gioihanZoom(giatri) {
 function zoom(heso, vitrichuotX, vitrichuotY) {
     const hopbando = oBando.getBoundingClientRect();
 
-    /*Tọa độ chuột hiện tại trên màn hình*/ 
+    /*Quy đổi tọa độ chuột trên màn hình để trước và sau zoom đều tính được*/ 
     if (vitrichuotX === undefined) {
         vitrichuotX = hopbando.left + hopbando.width / 2;
     }
@@ -265,7 +265,7 @@ function zoom(heso, vitrichuotX, vitrichuotY) {
         vitrichuotY = hopbando.top + hopbando.height / 2;
     }
 
-    /*Tọa độ chuột sau zoom, công thức thì giả sử gọi x là tọa độ gốc còn vị trí chuột hiện tại là X,
+    /*Tọa độ chuột trước zoom, công thức thì giả sử gọi x là tọa độ gốc còn vị trí chuột hiện tại là X,
     L là chiều rộng mép trái, t là chiều rộng bị lệch thì X = sx + t + L. Đổi chiều thì được công thức như dưới*/
     const diembandoX = (vitrichuotX - hopbando.left - lechX) / mucZoom;
     const diembandoY = (vitrichuotY - hopbando.top - lechY) / mucZoom;

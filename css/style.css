@@ -184,6 +184,79 @@ g.diem-hien circle {
     pointer-events: none;
 }
 
+/* Tuyến lộ trình: ba lớp chồng nhau (quầng, viền trắng, nét chính).
+   stroke-width do ketqua.js đặt theo độ phóng để nét không to/nhỏ khi zoom. */
+#lopDuongDi .tuyen-quang {
+    fill: none;
+    stroke: #bfdbfe;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+#lopDuongDi .tuyen-vien {
+    fill: none;
+    stroke: #ffffff;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+#lopDuongDi .tuyen-chinh {
+    fill: none;
+    stroke: #2563eb;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+/* Đường sáng và dấu «+» khi rê chuột gần đoạn đường (vẽ bởi thietlap.js). */
+
+/* Quầng xanh nhạt hiện khi rê chuột gần tuyến (ketqua.js: capNhatTuyenSang). */
+#lopDuongDi .tuyen-sang {
+    fill: none;
+    stroke: #7dd3fc;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+#lopDuongDi .tuyen-sang.hien {
+    opacity: 0.9;
+}
+
+/* Dấu sự cố trên bản đồ (vẽ bởi thietlap.js). */
+#lopSuCo .canh-su-co {
+    fill: none;
+    stroke-linecap: round;
+    opacity: 0.9;
+}
+
+#lopSuCo .canh-cao-diem {
+    stroke: #f59e0b;
+    stroke-width: 7;
+    stroke-dasharray: 12 12;
+}
+
+#lopSuCo .canh-ngap {
+    stroke: #dc2626;
+    stroke-width: 7;
+    stroke-dasharray: 12 8;
+}
+
+/* Đoạn đường được tô sáng khi rê chuột ở chế độ đánh dấu (vẽ bởi thietlap.js). */
+#lopRe .duong-re {
+    fill: none;
+    stroke: #93c5fd;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+    pointer-events: none;
+}
+
 @media (max-width: 800px) {
     body {
         overflow: auto;
@@ -199,3 +272,44 @@ g.diem-hien circle {
             "c";
     }
 }
+/* ===== Vùng thiết lập + vùng kết quả (giao diện thô, nhóm UI sẽ làm lại) ===== */
+.o2 h2,
+.o3 h2 { margin: 0 0 12px; font-size: 18px; }
+.o2 h3,
+.o3 h3 { margin: 0 0 8px; font-size: 14px; }
+.o2 .khoi { margin-bottom: 14px; }
+.o2 p,
+.o3 p { margin: 6px 0; font-size: 13px; }
+.ghi-chu { color: #6b7280; font-size: 12px; }
+.thong-bao { min-height: 2.6em; }
+.thong-bao.ok { color: #15803d; }
+.thong-bao.loi { color: #b91c1c; }
+.nhom-nut { display: flex; flex-wrap: wrap; gap: 8px; }
+.o2 button {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+.o2 button:hover { background: #f3f4f6; }
+.o2 button.dang-bat { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+.o2 button.nut-chinh { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+.trang-thai { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #e5e7eb; font-size: 12px; font-weight: 600; }
+.trang-thai.xong { background: #dcfce7; color: #15803d; }
+.trang-thai.loi { background: #fee2e2; color: #b91c1c; }
+.so-lieu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.o-so-lieu { padding: 8px; border: 1px solid #e5e8ec; border-radius: 8px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.nhan-so { color: #6b7280; font-size: 12px; }
+.thu-tu { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.diem-thu-tu { display: inline-flex; flex-direction: column; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 12px; }
+.diem-thu-tu .nhan { font-weight: 700; }
+.diem-thu-tu .ma { color: #6b7280; }
+.muiten { color: #6b7280; }
+.canh-bao { color: #b45309; }
+.o2 .tuy-chon { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; cursor: pointer; }
+.o2 .tuy-chon input { width: 16px; height: 16px; margin: 0; accent-color: #2563eb; }
+.o3 .ghi-chu { margin: -4px 0 12px; }
